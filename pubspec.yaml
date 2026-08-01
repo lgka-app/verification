@@ -1,0 +1,21 @@
+name: lgka_verification_harness
+description: Golden-dataset generator that runs the LGKA+ Flutter app's real extraction code over real PDFs/HTML, producing language-neutral goldens for the Swift and Kotlin rewrites.
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.8.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  lgka_flutter:
+    path: ../LGKA
+  syncfusion_flutter_pdf: ^33.1.44
+  http: ^1.6.0
+  html: ^0.15.4
+  crypto: ^3.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

@@ -1,0 +1,6 @@
+# Fixtures are byte-exact snapshots from the school server — the goldens
+# record their sha256, so git must NEVER touch their bytes (no EOL conversion).
+fixtures/** -text
+# Raw text dumps mirror extractor output verbatim; keep them byte-exact too.
+goldens/**/*.rawtext.txt -text
+goldens/**/*.layout.txt -text
