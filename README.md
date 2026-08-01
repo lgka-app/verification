@@ -42,6 +42,27 @@ flutter test test/generate_goldens_test.dart
 | `goldens/schedule/stundenplan_page_*.json` | schedule page HTML | ordered list of `{title, url, halbjahr, gradeLevel, fullUrl}` from `#mod-custom213 a[href*=stundenplan]`, deduped by fullUrl |
 | `goldens/schedule/class_index_*.json` | schedule PDF | map class → page for `5a`–`10e`: first page (lowercased text scan) containing the class string, stored as `pageIndex + 2`. `j11`/`j12` are a hardcoded constant `{j11: 2, j12: 3}`, never parsed |
 
+## Native implementations
+
+Both native extractors are verified against these goldens at 100% parity:
+
+- **Kotlin** (PDFBox): [`lgka-app/lgka-android`](https://github.com/lgka-app/lgka-android) → `extractor/`
+- **Swift** (PDFKit): [`lgka-app/lgka-ios`](https://github.com/lgka-app/lgka-ios) → `Sources/LGKAExtractor`
+
+Each ships a runner CLI (`<fixturesDir> <outDir>`). Compare outputs with:
+
+```bash
+tool/compare_report.py <kotlin-out-dir> --swift <swift-out-dir> --out report.html
+```
+
+Exit code 0 only on full parity — usable as a CI gate. Port lessons learned
+(all handled by both ports): Syncfusion doubles glyphs in flat text; older
+Untis exports split words per glyph (join fragments touching within 3px);
+PDFKit `characterBounds(at:)` indexes text without the newlines present in
+`page.string` (track the bounds index separately) and returns tight glyph
+bounds (cluster lines via `selectionsByLine()` bands, not glyph tops); footer
+"Periode" prefix exists only in newer Untis exports.
+
 ## Caveats
 
 - **`*.rawtext.txt` is diagnostic, not normative.** Syncfusion's raw extraction has quirks (e.g. doubled glyphs: "Gyymnasium") that PDFKit/PdfBox will not reproduce. Native parsers must match the *parsed JSON*, not the raw text. Expect to re-tune regexes per platform.
