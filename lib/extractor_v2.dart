@@ -69,8 +69,8 @@ class SubstitutionPlanV2 {
         'footer': footer,
       };
 
-  /// All entries affecting [className] (case-insensitive substring of the
-  /// classes cell, so "10b" matches "10b", "10abc" and "9a, 10b").
+  /// All entries affecting [className] — matched against the expanded class
+  /// list, so "6a" matches cells "6a", "6ab" and "5c, 6a".
   List<Map<String, dynamic>> entriesForClass(String className) {
     final lc = className.toLowerCase();
     return entries
@@ -78,6 +78,25 @@ class SubstitutionPlanV2 {
             (e['classes'] as List).any((c) => (c as String).toLowerCase() == lc))
         .toList();
   }
+}
+
+/// Expands an Untis class cell into individual classes:
+/// "6ab" -> [6a, 6b]; "5a, 7c" -> [5a, 7c]; "J11" -> [J11].
+List<String> _expandClasses(String cell) {
+  final out = <String>[];
+  for (final part in cell.split(',')) {
+    final p = part.trim();
+    if (p.isEmpty) continue;
+    final m = RegExp(r'^(\d{1,2})([a-e]{2,})$').firstMatch(p);
+    if (m != null) {
+      for (final letter in m.group(2)!.split('')) {
+        out.add('${m.group(1)}$letter');
+      }
+    } else {
+      out.add(p);
+    }
+  }
+  return out;
 }
 
 SubstitutionPlanV2 extractSubstitutionPlanV2(List<int> bytes) {
@@ -104,11 +123,13 @@ SubstitutionPlanV2 extractSubstitutionPlanV2(List<int> bytes) {
       } else if (t.startsWith('Abwesende Klassen')) {
         classesIdx = i;
       } else if (headerIdx == null &&
-          lines[i].wordCollection.isNotEmpty &&
-          lines[i].wordCollection.first.text == 'Art' &&
+          t.startsWith('Art') &&
           t.contains('Stunde')) {
         headerIdx = i;
-      } else if (t.startsWith('Periode ')) {
+      } else if (RegExp(r'\d{1,2}\.\d{1,2}\.\d{4}\s*\(\d+\)\s*SJ\s')
+          .hasMatch(t)) {
+        // footer: "[Periode N]  D.M.YYYY (week)  SJ YY/YY" — the "Periode"
+        // prefix exists in newer Untis exports only (e.g. 2027, not 2026)
         footerIdx = i;
       }
     }
@@ -134,12 +155,12 @@ SubstitutionPlanV2 extractSubstitutionPlanV2(List<int> bytes) {
     String? footerYear;
     if (footerIdx != null) {
       final m = RegExp(
-              r'Periode\s+(\d+)\s+(\d{1,2})\.(\d{1,2})\.(\d{4})\s+\((\d+)\)\s+SJ\s+(\S+)')
+              r'(?:Periode\s+(\d+)\s+)?(\d{1,2})\.(\d{1,2})\.(\d{4})\s+\((\d+)\)\s+SJ\s+(\S+)')
           .firstMatch(lines[footerIdx].text.replaceAll(RegExp(r'\s+'), ' '));
       if (m != null) {
         footerYear = m.group(4);
         plan.footer = {
-          'untisPeriod': int.parse(m.group(1)!),
+          'untisPeriod': m.group(1) == null ? null : int.parse(m.group(1)!),
           'date':
               '${m.group(2)!.padLeft(2, '0')}.${m.group(3)!.padLeft(2, '0')}.${m.group(4)}',
           'calendarWeek': int.parse(m.group(5)!),
@@ -193,14 +214,19 @@ SubstitutionPlanV2 extractSubstitutionPlanV2(List<int> bytes) {
 
     // ---- table ------------------------------------------------------------
     if (headerIdx != null) {
-      // Column x-starts from header words; merge splits closer than 8px
-      // (kerning can split a header word, e.g. "T ext").
+      // Column x-starts from header words. Exports split header words by
+      // kerning ("T ext") or even per glyph ("A r t" in Untis 2026); such
+      // fragments continue at ~0px from the previous fragment's right edge
+      // (often overlapping), while genuine neighboring columns sit >=5px
+      // apart — so anything closer than 3px is the same word.
       final xs = <double>[];
+      double? lastRight;
       for (final w in lines[headerIdx].wordCollection) {
         if (w.text.trim().isEmpty) continue;
-        if (xs.isEmpty || w.bounds.left - xs.last > 8) {
+        if (xs.isEmpty || w.bounds.left - lastRight! > 3) {
           xs.add(w.bounds.left);
         }
+        lastRight = w.bounds.right;
       }
       if (xs.length != columnNames.length) {
         throw StateError(
@@ -218,11 +244,21 @@ SubstitutionPlanV2 extractSubstitutionPlanV2(List<int> bytes) {
       Map<String, dynamic>? current;
       for (var i = headerIdx + 1; i < tableEnd; i++) {
         final cells = List<String>.filled(columnNames.length, '');
+        int? prevCol;
+        double? prevRight;
         for (final w in lines[i].wordCollection) {
           final t = w.text.trim();
           if (t.isEmpty) continue;
           final c = columnOf(w.bounds.left);
-          cells[c] = cells[c].isEmpty ? t : '${cells[c]} $t';
+          if (cells[c].isEmpty) {
+            cells[c] = t;
+          } else if (c == prevCol && w.bounds.left - prevRight! <= 3) {
+            cells[c] = '${cells[c]}$t'; // glyph fragment of the same word
+          } else {
+            cells[c] = '${cells[c]} $t';
+          }
+          prevCol = c;
+          prevRight = w.bounds.right;
         }
         if (cells.every((c) => c.isEmpty)) continue;
 
@@ -232,9 +268,8 @@ SubstitutionPlanV2 extractSubstitutionPlanV2(List<int> bytes) {
             for (var c = 0; c < columnNames.length; c++)
               columnNames[c]: cells[c].isEmpty ? null : cells[c],
           };
-          current['classes'] = cells[2].isEmpty
-              ? <String>[]
-              : cells[2].split(',').map((s) => s.trim()).toList();
+          current['classesRaw'] = cells[2].isEmpty ? null : cells[2];
+          current['classes'] = _expandClasses(cells[2]);
           plan.entries.add(current);
         } else if (current != null) {
           // continuation line: append wrapped cell text
