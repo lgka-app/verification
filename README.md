@@ -49,10 +49,12 @@ Both native extractors are verified against these goldens at 100% parity:
 - **Kotlin** (PDFBox): [`lgka-app/lgka-android`](https://github.com/lgka-app/lgka-android) → `extractor/`
 - **Swift** (PDFKit): [`lgka-app/lgka-ios`](https://github.com/lgka-app/lgka-ios) → `Sources/LGKAExtractor`
 
-Each ships a runner CLI (`<fixturesDir> <outDir>`). Compare outputs with:
+Each ships a runner CLI (`<fixturesDir> <outDir>`). Compare outputs with the
+Rust comparator — run once, get `report.html`:
 
 ```bash
-tool/compare_report.py <kotlin-out-dir> --swift <swift-out-dir> --out report.html
+cargo run --release --manifest-path tool/compare-report/Cargo.toml -- \
+  <kotlin-out-dir> --swift <swift-out-dir> --out report.html
 ```
 
 Exit code 0 only on full parity — usable as a CI gate. Port lessons learned
