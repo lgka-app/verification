@@ -49,7 +49,9 @@ Both native extractors are verified against these goldens at 100% parity:
 - **Kotlin** (PDFBox): [`lgka-app/lgka-android`](https://github.com/lgka-app/lgka-android) → `extractor/`
 - **Swift** (PDFKit): [`lgka-app/lgka-ios`](https://github.com/lgka-app/lgka-ios) → `Sources/LGKAExtractor`
 
-Each ships a runner CLI (`<fixturesDir> <outDir>`). Compare outputs with the
+Each ships a runner CLI (`<substitution|classindex> <fixturesDir> <outDir>`)
+covering both the substitution extractor and the schedule class-to-page index
+(all class_index goldens gated too). Compare outputs with the
 Rust comparator — run once, get `report.html`:
 
 ```bash

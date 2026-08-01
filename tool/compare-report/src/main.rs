@@ -152,24 +152,40 @@ fn main() {
     }
 
     // ---- load goldens ----------------------------------------------------
+    // Two golden families share one namespace: substitution plans
+    // (goldens/substitution/<fx>.v2.json -> impl <fx>.json) and schedule
+    // class indexes (goldens/schedule/class_index_<pdf>.json -> impl
+    // class_index_<pdf>.json).
     let repo = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().parent().unwrap();
-    let goldens_dir = repo.join("goldens").join("substitution");
-    let mut fixtures: Vec<String> = fs::read_dir(&goldens_dir)
+    let mut fixture_files: Vec<(String, PathBuf)> = Vec::new();
+    for e in fs::read_dir(repo.join("goldens").join("substitution"))
         .expect("goldens/substitution not found")
         .filter_map(|e| e.ok())
-        .filter_map(|e| {
-            let n = e.file_name().to_string_lossy().into_owned();
-            n.strip_suffix(".v2.json").map(str::to_string)
-        })
-        .collect();
-    fixtures.sort();
+    {
+        let n = e.file_name().to_string_lossy().into_owned();
+        if let Some(id) = n.strip_suffix(".v2.json") {
+            fixture_files.push((id.to_string(), e.path()));
+        }
+    }
+    for e in fs::read_dir(repo.join("goldens").join("schedule"))
+        .expect("goldens/schedule not found")
+        .filter_map(|e| e.ok())
+    {
+        let n = e.file_name().to_string_lossy().into_owned();
+        if n.starts_with("class_index_") {
+            if let Some(id) = n.strip_suffix(".json") {
+                fixture_files.push((id.to_string(), e.path()));
+            }
+        }
+    }
+    fixture_files.sort();
+    let fixtures: Vec<String> = fixture_files.iter().map(|(id, _)| id.clone()).collect();
 
     // ---- compare ---------------------------------------------------------
     let mut results: Vec<(String, Value, Vec<(&str, ImplResult)>)> = Vec::new();
-    for fx in &fixtures {
-        let golden_file = goldens_dir.join(format!("{fx}.v2.json"));
+    for (fx, golden_file) in &fixture_files {
         let golden_doc: Value =
-            serde_json::from_str(&fs::read_to_string(&golden_file).unwrap()).unwrap();
+            serde_json::from_str(&fs::read_to_string(golden_file).unwrap()).unwrap();
         let golden = golden_doc["expected"].clone();
         let mut per_impl = Vec::new();
         for (name, dir) in &impls {
@@ -279,7 +295,7 @@ fn main() {
     let html = format!(
         "<title>LGKA Extractor Parity</title>\n<style>{CSS}</style>\n<main>\n\
          <h1>LGKA <em>extractor parity</em> — native extractors vs Dart goldens</h1>\n\
-         <p class=\"meta\">generated {now} · goldens @ {commit} · {} substitution fixtures</p>\n\
+         <p class=\"meta\">generated {now} · goldens @ {commit} · {} fixtures (substitution + class index)</p>\n\
          <p>{verdict}</p>\n\
          <div class=\"tablewrap\"><table class=\"summary\">\
          <thead><tr><th>fixture</th>{impl_headers}</tr></thead>\
