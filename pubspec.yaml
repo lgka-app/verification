@@ -19,3 +19,11 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+dependency_overrides:
+  # Vendored & patched copy (extracted from the app's rebuild/audit-refactor
+  # branch): upstream weather_icons 3.0.0 breaks under Flutter 3.44+ because
+  # IconData is now a final class. Overrides must live in the ROOT package,
+  # so the app's own override does not propagate through the path dependency.
+  weather_icons:
+    path: third_party/weather_icons

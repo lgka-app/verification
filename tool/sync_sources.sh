@@ -52,3 +52,29 @@ Future<Map<String, int>> harnessBuildClassIndex(String pdfPath) =>
 EOF
 
 echo "Vendored 3 sources into $OUT"
+
+# --- news_service.dart (lives in lib/features/news/data/) ---
+sed \
+  -e "s|import '\.\./domain/|import 'package:lgka_flutter/features/news/domain/|" \
+  -e "s|import '\.\./\.\./\.\./\.\./|import 'package:lgka_flutter/|" \
+  "$APP/features/news/data/news_service.dart" > "$OUT/news_service_vendored.dart"
+
+# --- events_service.dart (lives in lib/features/events/data/ — NOTE: only 3 levels up to utils) ---
+sed \
+  -e "s|import '\.\./domain/|import 'package:lgka_flutter/features/events/domain/|" \
+  -e "s|import '\.\./\.\./\.\./|import 'package:lgka_flutter/|" \
+  "$APP/features/events/data/events_service.dart" > "$OUT/events_service_vendored.dart"
+cat >> "$OUT/events_service_vendored.dart" <<'SHIM'
+
+// ---- harness shim (appended by tool/sync_sources.sh) ----
+List<SchoolEvent> harnessParseEventsWeekHtml(String html, DateTime today) =>
+    EventsService.instance._parseWeekHtml(html, today);
+SHIM
+
+# --- weather_service.dart (lives in lib/features/weather/data/) ---
+sed \
+  -e "s|import '\.\./domain/|import 'package:lgka_flutter/features/weather/domain/|" \
+  -e "s|import '\.\./\.\./\.\./\.\./|import 'package:lgka_flutter/|" \
+  "$APP/features/weather/data/weather_service.dart" > "$OUT/weather_service_vendored.dart"
+
+echo "Vendored web services (news, events, weather)"

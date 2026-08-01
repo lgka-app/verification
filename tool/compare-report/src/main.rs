@@ -110,6 +110,13 @@ fn diff(path: &str, golden: &Value, actual: &Value, out: &mut Vec<(String, Strin
                 diff(&format!("{path}[{i}]"), gv, av, out);
             }
         }
+        // Numbers compare as f64: Dart/Kotlin serialize 37240.0, Swift's
+        // JSONSerialization emits 37240 — semantically identical.
+        (Value::Number(g), Value::Number(a)) => {
+            if g.as_f64() != a.as_f64() {
+                out.push((path.to_string(), jshow(golden), jshow(actual)));
+            }
+        }
         _ => {
             if golden != actual {
                 out.push((path.to_string(), jshow(golden), jshow(actual)));
@@ -172,9 +179,23 @@ fn main() {
         .filter_map(|e| e.ok())
     {
         let n = e.file_name().to_string_lossy().into_owned();
-        if n.starts_with("class_index_") {
+        if n.starts_with("class_index_") || n.starts_with("stundenplan_page_") {
             if let Some(id) = n.strip_suffix(".json") {
                 fixture_files.push((id.to_string(), e.path()));
+            }
+        }
+    }
+    // Web-scraper families: goldens/<family>/<family>_<stamp>.json
+    for family in ["news", "events", "weather"] {
+        let dir = repo.join("goldens").join(family);
+        if let Ok(entries) = fs::read_dir(&dir) {
+            for e in entries.filter_map(|e| e.ok()) {
+                let n = e.file_name().to_string_lossy().into_owned();
+                if n.starts_with(&format!("{family}_")) {
+                    if let Some(id) = n.strip_suffix(".json") {
+                        fixture_files.push((id.to_string(), e.path()));
+                    }
+                }
             }
         }
     }
