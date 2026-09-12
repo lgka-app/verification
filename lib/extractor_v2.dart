@@ -126,7 +126,7 @@ SubstitutionPlanV2 extractSubstitutionPlanV2(List<int> bytes) {
           t.startsWith('Art') &&
           t.contains('Stunde')) {
         headerIdx = i;
-      } else if (RegExp(r'\d{1,2}\.\d{1,2}\.\d{4}\s*\(\d+\)\s*SJ\s')
+      } else if (RegExp(r'\d{1,2}\.\d{1,2}\.\d{4}\s*\(\d+\)')
           .hasMatch(t)) {
         // footer: "[Periode N]  D.M.YYYY (week)  SJ YY/YY" — the "Periode"
         // prefix exists in newer Untis exports only (e.g. 2027, not 2026)
@@ -137,7 +137,7 @@ SubstitutionPlanV2 extractSubstitutionPlanV2(List<int> bytes) {
     // ---- fixed header lines ----------------------------------------------
     for (var i = 0; i < (titleIdx ?? lines.length); i++) {
       final t = lines[i].text.trim();
-      if (RegExp(r'^SJ \d{4}-\d{4}$').hasMatch(t)) {
+      if (RegExp(r'^(SJ|Schuljahr) \d{4}-\d{4}$').hasMatch(t)) {
         plan.schoolYear = t;
       } else if (t.startsWith('Untis ')) {
         plan.untisVersion = t;
@@ -155,7 +155,7 @@ SubstitutionPlanV2 extractSubstitutionPlanV2(List<int> bytes) {
     String? footerYear;
     if (footerIdx != null) {
       final m = RegExp(
-              r'(?:Periode\s+(\d+)\s+)?(\d{1,2})\.(\d{1,2})\.(\d{4})\s+\((\d+)\)\s+SJ\s+(\S+)')
+              r'(?:Periode\s+(\d+)\s+)?(\d{1,2})\.(\d{1,2})\.(\d{4})\s+\((\d+)\)(?:\s+SJ\s+(\S+))?')
           .firstMatch(lines[footerIdx].text.replaceAll(RegExp(r'\s+'), ' '));
       if (m != null) {
         footerYear = m.group(4);
@@ -164,7 +164,7 @@ SubstitutionPlanV2 extractSubstitutionPlanV2(List<int> bytes) {
           'date':
               '${m.group(2)!.padLeft(2, '0')}.${m.group(3)!.padLeft(2, '0')}.${m.group(4)}',
           'calendarWeek': int.parse(m.group(5)!),
-          'schoolYearShort': 'SJ ${m.group(6)}',
+          'schoolYearShort': m.group(6) == null ? null : 'SJ ${m.group(6)}',
         };
       }
     }
