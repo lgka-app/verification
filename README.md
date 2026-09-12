@@ -1,8 +1,3 @@
-> **Moved (2026-09-12).** The parity harness now lives in [lgka-app/api](https://github.com/lgka-app/api):
-> fixtures and goldens under `test/`, the Rust comparator under `tool/compare-report`, and `npm run parity`
-> renders the report against the API's parsers (21/21 at strict equality). The native apps no longer contain
-> extractors — they consume https://api.lgka.app. This repository is kept for history and is no longer updated.
-
 # LGKA+ Verification Harness
 
 Golden-dataset generator for the native rewrite ([lgka-app/lgka-ios](https://github.com/lgka-app/lgka-ios), [lgka-app/lgka-android](https://github.com/lgka-app/lgka-android)).
