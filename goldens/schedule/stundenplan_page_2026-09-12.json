@@ -1,0 +1,29 @@
+{
+  "input": {
+    "file": "fixtures/schedule/stundenplan_page_2026-09-12.html",
+    "sha256": "4e798831aadd89afbd0755cd99ce508bbd10b8ba7432ead77de62ef9ab939908"
+  },
+  "expected": [
+    {
+      "title": "Stundenpläne - 2026/2027 - 1.HJ - 5-10",
+      "url": "/cm3/../stundenplan/schueler/stundenplan_hj1_5-10_09092026_10h42m.pdf",
+      "halbjahr": "1. Halbjahr",
+      "gradeLevel": "Klassen 5-10",
+      "fullUrl": "https://lessing-gymnasium-karlsruhe.de/stundenplan/schueler/stundenplan_hj1_5-10_09092026_10h42m.pdf"
+    },
+    {
+      "title": "Stundenpläne - 2026/2027 - 1.HJ - J11",
+      "url": "/cm3/../stundenplan/schueler/stundenplan_hj1_11_09092026_10h42m.pdf",
+      "halbjahr": "1. Halbjahr",
+      "gradeLevel": "Unbekannt",
+      "fullUrl": "https://lessing-gymnasium-karlsruhe.de/stundenplan/schueler/stundenplan_hj1_11_09092026_10h42m.pdf"
+    },
+    {
+      "title": "Stundenpläne - 2026/2027 - 1.HJ - J12",
+      "url": "/cm3/../stundenplan/schueler/stundenplan_hj1_12_09092026_10h42m.pdf",
+      "halbjahr": "1. Halbjahr",
+      "gradeLevel": "Unbekannt",
+      "fullUrl": "https://lessing-gymnasium-karlsruhe.de/stundenplan/schueler/stundenplan_hj1_12_09092026_10h42m.pdf"
+    }
+  ]
+}

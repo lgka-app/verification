@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-12T11:09:21.760435Z",
+  "generatedAt": "2026-09-12T20:24:10.834345Z",
   "appRepo": "https://github.com/luka-loehr/LGKA",
-  "appCommit": "e8063835f7795c8a28048d79988996b39eac3c24",
+  "appCommit": "0f9f0ac0ec728f2edd214cdc15f5ad33600a47a1",
   "extractor": "syncfusion_flutter_pdf (see pubspec.lock for version)",
   "flutter": {
     "frameworkVersion": "3.44.2",
