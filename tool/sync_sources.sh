@@ -10,7 +10,9 @@
 #      parse function without modifying the original code
 set -euo pipefail
 
-APP=/Users/luka/Documents/lgka-app/lib
+# The Flutter app is a sibling checkout named LGKA (see README); override with
+# LGKA_APP=/path/to/app if it lives elsewhere.
+APP="${LGKA_APP:-$(cd "$(dirname "$0")/../.." && pwd)/LGKA}/lib"
 OUT="$(cd "$(dirname "$0")/.." && pwd)/lib/vendored"
 mkdir -p "$OUT"
 

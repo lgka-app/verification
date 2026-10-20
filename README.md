@@ -2,7 +2,7 @@
 
 Golden-dataset generator for the native rewrite ([lgka-app/lgka-ios](https://github.com/lgka-app/lgka-ios), [lgka-app/lgka-android](https://github.com/lgka-app/lgka-android)).
 
-It runs the **real Dart extraction code of the shipping Flutter app** ([luka-loehr/LGKA](https://github.com/luka-loehr/LGKA)) over **real PDFs/HTML from the school server** and writes language-neutral JSON goldens. The Swift and Kotlin extractors are correct when, given the same fixture bytes, they produce the same `expected` JSON values.
+It runs the **real Dart extraction code of the shipping Flutter app** ([luka-loehr/LGKA](https://github.com/luka-loehr/LGKA)) over PDFs/HTML shaped like the school server's and writes language-neutral JSON goldens. The committed substitution and timetable fixtures are **synthetic** (fake teacher codes); the news, events and weather fixtures are snapshots of public pages. The Swift and Kotlin extractors are correct when, given the same fixture bytes, they produce the same `expected` JSON values.
 
 ## Layout
 
@@ -77,6 +77,7 @@ bounds (cluster lines via `selectionsByLine()` bands, not glyph tops); footer
 - **Year fallback nondeterminism.** The substitution parser falls back to `DateTime.now().year` when no year is found anywhere in the PDF. All current fixtures contain a footer/timestamp year, so goldens are stable — but regenerating goldens years later could differ for a hypothetical year-less PDF.
 - **Grow the corpus.** Run `tool/fetch_fixtures.sh` on different school days (normal days, exam weeks, first/last day of term, days with many cancellations) — fixtures are date-stamped and additive. The current snapshot (2026-08-01, summer holidays) captured the last school day's plan.
 - Fixtures are fetched with the app's own public read-only credentials (`lib/config/app_credentials.dart`).
+- **Never commit real substitution or timetable data.** Those files carry teacher data from the school's Basic-Auth area, so `.gitignore` keeps fetched `fixtures/substitution/*.pdf`, `fixtures/schedule/*.pdf` and `fixtures/schedule/*.html` out of git. Use them locally only; add synthetic replacements with `git add -f`.
 - **Weather goldens must be regenerated the same day their fixture was fetched** — the hourly window is anchored to generation time; `params.referenceNow` records the window start for native runs (`weather` mode takes it as an extra CLI arg).
 - **Events goldens are parameterized by `params.today`** (past-event filtering); the extra `manifest_sept-week_*` fixture covers a populated school week during term time.
 - **Captured app bug (intentional):** the live site prints creation dates as `28. Juli 2026`, but the app's parser expects `DD.MM.YYYY` — so `parsed_date` is null on every current article and news keeps list order. The goldens capture the app's real behavior; fix it in the app first if you want it fixed in the ports.

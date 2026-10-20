@@ -5,3 +5,12 @@ build/
 *.iml
 .DS_Store
 tool/compare-report/target/
+
+# tool/fetch_fixtures.sh downloads REAL substitution plans, timetables and the
+# timetable page from the school's Basic-Auth area. They contain teacher data
+# and must never be committed to this public repo. The tracked fixtures are
+# synthetic stand-ins (git keeps tracking them); add a new synthetic fixture
+# with `git add -f`.
+fixtures/substitution/*.pdf
+fixtures/schedule/*.pdf
+fixtures/schedule/*.html
